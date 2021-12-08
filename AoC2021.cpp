@@ -477,6 +477,7 @@ void DaySix()
 	{
 		Lantern* l = new Lantern(i);
 		answers[i] = l->CalcDescendents(80);
+		//answers[i] = Lantern::CalcDescMaths(i, 80);
 		delete l;
 	}
 	for (std::vector<Lantern>::iterator it = fishies->begin(); it != fishies->end(); ++it)
@@ -491,7 +492,6 @@ void DaySix()
 	{
 		Lantern* l = new Lantern(i);
 		answers[i] = l->CalcDescendents(256);
-	//	answers[i] = 0;
 		delete l;
 	}
 	for (std::vector<Lantern>::iterator it = fishies->begin(); it != fishies->end(); ++it)
@@ -510,7 +510,6 @@ void DaySeven()
 	std::ifstream exprFile("DaySeven.txt");
 	std::string singleExpr;
 	std::vector<int> numbers;
-	//std::vector<int> numbersV;
 
 	int min = INT_MAX;
 	int max = INT_MIN;
@@ -544,12 +543,18 @@ void DaySeven()
 		int diff = fabsf(pos - median);
 		fuel += diff;
 	}
+	std::cout << "Puzzle Thirteen: " << fuel << "\n";
 
 	int average = (max + min) / 2;
 	int direction = average > median ? 1 : -1;
+	int start = median; int end = max;
+	if (direction < 0)
+	{
+		end = min;
+	}
 
 	int bestFuel = INT_MAX;
-	for (int i = median; i < max; ++i)
+	for (int i = start; i < end; i += direction)
 	{
 		int fuelTemp = 0;
 		for (std::vector<int>::const_iterator jt = numbers.begin(); jt != numbers.end(); ++jt)
@@ -567,25 +572,203 @@ void DaySeven()
 		}
 		else
 		{
-		//	break;
+			break;
 		}
 	}
-
-
-	std::cout << "Puzzle Thirteen: " << fuel << "\n";
-
 
 	std::cout << "Puzzle Fourteen: " << bestFuel << "\n";
 }
 
+void tokenise(std::string& s, std::vector<std::string>& vec, char delim)
+{
+	// we are looking for all instances of 1/4/7/8 (2, 4, 3, 7)
+	int delimiter = s.find(' ');
+	int start = 0;
+	while(delimiter != std::string::npos)
+	{
+		std::string token = s.substr(start, delimiter - start);
+		vec.push_back(token);
+		start = delimiter + 1;
+		delimiter = s.find(' ', delimiter + 1);
+	}
+	std::string token = s.substr(start);
+	vec.push_back(token);
+}
+
+void DayEight()
+{
+	std::ifstream exprFile("DayEight.txt");
+	std::string singleExpr;
+	std::vector<std::string> input;
+	std::vector<std::string> output;
+
+	int min = INT_MAX;
+	int max = INT_MIN;
+
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		int delimiter = singleExpr.find('|');
+		if(delimiter != std::string::npos)
+		{
+			input.push_back(singleExpr.substr(0, delimiter - 1));
+			output.push_back(singleExpr.substr(delimiter + 2));
+		}
+	}
+
+	int answer = 0;
+	for (std::string s : output)
+	{
+		// we are looking for all instances of 1/4/7/8 (2, 4, 3, 7)
+		int delimiter = s.find(' ');
+		int start = 0;
+		while(delimiter != std::string::npos)
+		{
+			std::string token = s.substr(start, delimiter - start);
+			const int length = token.length();
+			if(length == 2 || length == 4 || length == 3 || length == 7)
+			{
+				answer++;
+			}			
+			start = delimiter + 1;
+			delimiter = s.find(' ', delimiter + 1);
+		}
+		std::string token = s.substr(start);
+		const int length = token.length();
+		if(length == 2 || length == 4 || length == 3 || length == 7)
+		{
+			answer++;
+		}
+	}
+	std::cout << "Puzzle Fifteen: " << answer << "\n";
+
+	std::vector<int> answers;
+	int count = 0;
+	for (std::string s : input)
+	{
+		std::string digits[10];
+
+		std::vector<std::string> tokens;
+		tokenise(s, tokens, ' ');
+
+		for (std::string t : tokens)
+		{
+			switch(t.length())
+			{
+			case 2: digits[1] = t; break;
+			case 4: digits[4] = t; break;
+			case 3: digits[7] = t; break;
+			case 7: digits[8] = t; break;
+			default: break;
+			}
+		}
+
+		for (std::string t : tokens)
+		{
+			switch (t.length())
+			{
+			case 5: // 2, 3, 5. 3 contains 1. 
+			{
+				// check 1
+				int a = t.find(digits[1].at(0));
+				int b = t.find(digits[1].at(1));
+				if(a != std::string::npos && b != std::string::npos)
+					digits[3] = t;
+				else
+				{	// 5 has 3 digits in common with 4, 2 only has 3
+					int matches = 0;
+					for (int i = 0; i < 4; ++i)
+					{
+						int a = t.find(digits[4].at(i));
+						if(a != std::string::npos) matches++;
+					}
+					if(matches == 3) digits[5] = t;
+					else digits[2] = t;
+				}
+			}
+			break;
+			case 6: //0, 6, 9. 6 doesn't contain 1
+			{
+				int a = t.find(digits[1].at(0));
+				int b = t.find(digits[1].at(1));
+				if(a == std::string::npos || b == std::string::npos)
+					digits[6] = t;
+				else // 0 or 9. 9 contains all of 4
+				{
+					int matches = 0;
+					for (int i = 0; i < 4; ++i)
+					{
+						int a = t.find(digits[4].at(i));
+						if(a != std::string::npos) matches++;
+					}
+					if(matches == 4) digits[9] = t;
+					else digits[0] = t;
+				}
+			}
+			break;
+			}
+		}
+
+		bool safe = true;
+		for (int i = 0; i < 10; ++i)
+		{
+			if (digits[i].empty())
+			{
+				safe = false;
+				std::cout << "Uh Oh\n";				
+			}
+		}
+
+		if (safe)
+		{
+			std::vector<std::string> outtokens;
+			tokenise(output.at(count), outtokens, ' ');
+
+			int answer = 0;
+			for (std::string o : outtokens)
+			{
+				for (int d = 0; d < 10; ++d)
+				{
+					int len = digits[d].length();
+					if(o.length() != len) continue;
+
+					bool found = true;
+					for (int di = 0; di < len; ++di)
+					{
+						int a = o.find(digits[d].at(di));
+						if(a == std::string::npos) 
+						{
+							found = false;
+							break;
+						}
+					}
+					if (found)
+					{
+						answer *= 10;
+						answer += d;
+					}
+				}
+			}
+			answers.push_back(answer);
+		}
+		count++;
+	}
+
+	int total = 0;
+	for(int a : answers)
+		total += a;
+	std::cout << "Puzzle Sixteen: " << total << "\n";
+
+}
+
 int main()
 {
-	PuzzleTwo();
-	PuzzleThree();
-	PuzzleFour();
-	DayThree();
-	DayFour();
-	DayFive();
+//	PuzzleTwo();
+//	PuzzleThree();
+//	PuzzleFour();
+//	DayThree();
+//	DayFour();
+//	DayFive();
 //	DaySix();
 	DaySeven();
+	DayEight();
 }
