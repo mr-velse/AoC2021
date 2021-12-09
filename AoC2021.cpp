@@ -8,6 +8,7 @@
 #include <array>
 #include <list>
 #include <algorithm>
+#include <set>
 
 #include "Inputs.h"
 #include "Bingo.h"
@@ -760,6 +761,106 @@ void DayEight()
 
 }
 
+int CheckBasin(std::set<std::pair<int, int> >& theSet, std::vector<std::string>& heights, int x, int y, int dirx, int diry)
+{
+	const int max = 100; // we know this. soz
+
+	int nextx = x + dirx;
+	int nexty = y + diry;
+
+	if (nextx >= 0 && nextx < max && nexty >= 0 && nexty < 100)
+	{
+		int a = heights.at(nexty).at(nextx) - '0';
+		if (a < 9)
+		{
+			std::pair<std::set<std::pair<int, int> >::iterator, bool> result = theSet.insert(std::pair<int, int>(nextx, nexty));
+			if(result.second == true)
+			{
+				int neighbours = 1; // this specific idx
+				neighbours += CheckBasin(theSet, heights, nextx, nexty, 0, 1);
+				neighbours += CheckBasin(theSet, heights, nextx, nexty, 1, 0);
+				neighbours += CheckBasin(theSet, heights, nextx, nexty, 0, -1);
+				neighbours += CheckBasin(theSet, heights, nextx, nexty, -1, 0);
+				return neighbours;
+			}
+		}
+		return 0;
+	}
+	return 0;
+}
+
+void DayNine()
+{
+	std::ifstream exprFile("DayNine.txt");
+	std::string singleExpr;
+	std::vector<std::string> input;
+
+	int x = 0;
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		input.push_back(singleExpr);
+		x = singleExpr.length();
+	}
+
+	const int y = input.size();
+
+	std::vector<std::pair<int, int> > lows;
+
+	int count = 0;
+	int total = 0;
+	for (std::string s : input)
+	{
+		for(int i = 0; i < x; ++i)
+		{
+			int a = s.at(i) - '0';
+
+			if(i > 0)
+				if(s.at(i-1) - '0' <= a)
+					continue;
+
+			if(i < (x-1))
+				if(s.at(i+1) - '0' <= a)
+					continue;
+
+			if(count > 0)
+				if(input.at(count-1).at(i) - '0' <= a)
+					continue;
+
+			if(count < y-1)
+				if(input.at(count+1).at(i) - '0' <= a)
+					continue;
+
+			total += (a + 1);
+			lows.push_back(std::pair<int, int>(i, count));
+		}
+		count++;
+	}
+	std::cout << "Puzzle Seventeen: " << total << "\n";
+
+	std::list<int> totals;
+	for (std::pair<int, int> pair : lows)
+	{
+		std::set<std::pair<int, int> > theSet;
+
+		int tot = CheckBasin(theSet, input, pair.first, pair.second, 0, 0);
+
+		totals.push_back(tot);
+	}
+	totals.sort(); totals.reverse();
+	int tot = 1;
+	int count3 = 0;
+	for (int i : totals)
+	{
+		if(count3 < 3)
+		{
+			tot *= i;
+			count3++;
+		}
+		else break;
+	}
+	std::cout << "Puzzle Seventeen: " << tot << "\n";
+}
+
 int main()
 {
 //	PuzzleTwo();
@@ -769,6 +870,7 @@ int main()
 //	DayFour();
 //	DayFive();
 //	DaySix();
-	DaySeven();
-	DayEight();
+//	DaySeven();
+//	DayEight();
+	DayNine();
 }
