@@ -9,11 +9,14 @@
 #include <list>
 #include <algorithm>
 #include <set>
+#include <queue>
+#include <sstream>
 
 #include "Inputs.h"
 #include "Bingo.h"
 #include "Vents.h"
 #include "LanternFish.h"
+#include "CaveNetwork.h"
 
 void PuzzleTwo()
 {
@@ -275,7 +278,7 @@ void DayThree()
 		c02num = std::stol(str, 0, 2);
 	}
 
-	const unsigned long long answer2 = oxynum * c02num;
+	const uint64_t answer2 = oxynum * c02num;
 	std::cout << "Puzzle Six: " << answer2 << "\n";
 }
 
@@ -471,8 +474,8 @@ void DaySix()
 	}
 
 	// simulate
-	unsigned long long count = fishies->size();
-	unsigned long long answers[6];
+	uint64_t count = fishies->size();
+	uint64_t answers[6];
 
 	for (int i = 0; i < 6; ++i)
 	{
@@ -861,6 +864,497 @@ void DayNine()
 	std::cout << "Puzzle Seventeen: " << tot << "\n";
 }
 
+void DayTen()
+{
+	std::ifstream exprFile("DayTen.txt");
+	std::string singleExpr;
+	std::vector<std::string> input;
+
+	int x = 0;
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		input.push_back(singleExpr);
+		x = singleExpr.length();
+	}
+
+	std::vector<std::string> incomplete;
+
+	int score = 0;
+	for (std::string s : input)
+	{
+		std::list<char> chars;
+		for(int i = 0; i < s.length(); ++i)
+		{
+			char corruptChar = 0;
+			char c = s.at(i);
+			switch (c)
+			{
+			case '{':
+			case '[':
+			case '(':
+			case '<':
+				chars.push_back(c);
+				break;
+			case '}':
+			{
+				if (chars.back() == '{')
+				{
+					chars.pop_back();
+				}
+				else corruptChar = c;
+			} break;
+			case ']':
+			{
+				if (chars.back() == '[')
+				{
+					chars.pop_back();
+				}
+				else corruptChar = c;
+			} break;
+			case ')':
+			{
+				if (chars.back() == '(')
+				{
+					chars.pop_back();
+				}
+				else corruptChar = c;
+			} break;
+			case '>':
+			{
+				if (chars.back() == '<')
+				{
+					chars.pop_back();
+				}
+				else corruptChar = c;
+			} break;
+
+			}
+			if (corruptChar != 0)
+			{
+				switch (c)
+				{
+				case '}': score += 1197; break;
+				case ']': score += 57; break;
+				case ')': score += 3; break;
+				case '>': score += 25137; break;
+				}
+				break;
+			}
+			else if (i == s.length() - 1) // last char
+			{
+				incomplete.push_back(s);
+			}
+		}
+	}
+
+	std::cout << "Puzzle Eighteen: " << score << "\n";
+
+	std::vector<uint64_t> scores;
+	for (std::string s : incomplete)
+	{
+		std::list<char> needClosing;
+		std::list<char> closers;
+	//	std::string s = "[({(<(())[]>[[{[]{<()<>>";
+		for (int i = s.length() - 1; i >= 0; i--)
+		{
+			char c = s.at(i);
+
+			switch (c)
+			{
+			case '}':
+			case ']':
+			case ')':
+			case '>':
+				closers.push_front(c); break;
+			case '{':
+				if(closers.empty() || closers.front() != '}')
+					needClosing.push_back(c);
+				else
+					closers.pop_front();
+				break;
+			case '[':
+				if(closers.empty() || closers.front() != ']')
+					needClosing.push_back(c);
+				else
+					closers.pop_front();
+				break;
+			case '(':
+				if(closers.empty() || closers.front() != ')')
+					needClosing.push_back(c);
+				else
+					closers.pop_front();
+				break;
+			case '<':
+				if(closers.empty() || closers.front() != '>')
+					needClosing.push_back(c);
+				else
+					closers.pop_front();
+				break;
+			}
+		}
+
+		uint64_t score = 0;
+		for (char c : needClosing)
+		{
+			score *= 5;
+			switch (c)
+			{
+			case '{': score += 3; break;
+			case '[': score += 2; break;
+			case '(': score += 1; break;
+			case '<': score += 4; break;
+			}
+		}
+		scores.push_back(score);
+	}
+	std::sort(scores.begin(), scores.end());
+	int mid = scores.size() / 2;
+	std::cout << "Puzzle Nineteen: " << scores[mid] << "\n";
+}
+
+void DayEleven()
+{
+	std::ifstream exprFile("DayEleven.txt");
+	std::string singleExpr;
+	int data[10][10];
+	bool flashed[10][10];
+	int firstAllFlash = -1;
+
+	int row = 0;
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		for(int i = 0; i < 10; ++i)
+		{
+			char x = singleExpr.at(i);
+			data[i][row] = std::atoi(&x);
+			flashed[i][row] = false;
+		}
+		row++;
+	}
+
+	uint64_t flashes = 0;
+	for (int step = 0; step < 1000; ++step)
+	{
+		// initial increase
+		for(int i = 0; i < 10; ++i)
+		{
+			for(int j = 0; j < 10; ++j)
+			{
+				data[i][j]++;
+			}
+		}
+
+		bool hasflashed = false;
+		do
+		{
+			hasflashed = false;
+			for(int i = 0; i < 10; ++i)
+			{
+				for(int j = 0; j < 10; ++j)
+				{
+					if (data[i][j] > 9 && flashed[i][j] == false) // flash
+					{
+						hasflashed = true;
+						flashed[i][j] = true;
+						const bool negivalid = i > 0;
+						const bool negjvalid = j > 0;
+						const bool posivalid = i < 9;
+						const bool posjvalid = j < 9;
+
+						if(negivalid)
+						{
+							if(negjvalid) data[i-1][j-1]++;
+							data[i-1][j]++;
+							if(posjvalid) data[i-1][j+1]++;
+						}
+						if(posivalid)
+						{
+							if(negjvalid) data[i+1][j-1]++;
+							data[i+1][j]++;
+							if(posjvalid) data[i+1][j+1]++;
+						}
+						if(negjvalid) data[i][j-1]++;
+						if(posjvalid) data[i][j+1]++;
+					}
+
+				}
+			}
+		} while(hasflashed == true);
+
+		bool allFlashed = true;
+		for(int i = 0; i < 10; ++i)
+		{
+			for(int j = 0; j < 10; ++j)
+			{
+				if (flashed[i][j] == true)
+				{
+					flashed[i][j] = false;
+					data[i][j] = 0;
+					if(step < 100)
+					{
+						flashes++;
+					}
+				}
+				else
+				{
+					allFlashed = false;
+				}
+			}
+		}
+		if(allFlashed && firstAllFlash < 0)
+		{
+			firstAllFlash = step;
+			break;
+		}
+	}
+	std::cout << "Puzzle Twentyone: " << flashes << "\n";
+	std::cout << "Puzzle Twentytwo: " << firstAllFlash + 1<< "\n";
+}
+
+void DayTwelve()
+{
+	std::ifstream exprFile("DayTwelve.txt");
+	std::string singleExpr;
+
+	Caves caves;
+
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		int pos = singleExpr.find('-');
+		if (pos != std::string::npos)
+		{
+			std::string first = singleExpr.substr(0, pos);
+			std::string second = singleExpr.substr(pos+1);
+
+			caves.AddConnection(first, second);
+		}
+	}
+
+	std::cout << "Puzzle Twentythree: " << caves.ExhaustiveVisit(false) << "\n";
+	std::cout << "Puzzle Twentyfour: " << caves.ExhaustiveVisit(true) << "\n";
+}
+
+void DayThirteen()
+{
+	std::ifstream exprFile("DayThirteen.txt");
+	std::string singleExpr;
+
+	std::vector<std::pair<int, int> > input;
+	std::vector<std::pair<char, int> > folds;
+
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		int pos = singleExpr.find(',');
+		if (pos != std::string::npos)
+		{
+			std::string first = singleExpr.substr(0, pos);
+			std::string second = singleExpr.substr(pos+1);
+
+			input.push_back(std::pair<int,int>(std::stoi(first), std::stoi(second)));
+		}
+		else
+		{
+pos = singleExpr.find('=');
+if (pos != std::string::npos)
+{
+	std::string first = singleExpr.substr(pos - 1, 1);
+	std::string second = singleExpr.substr(pos + 1);
+
+	folds.push_back(std::pair<char, int>(first.at(0), std::stoi(second)));
+}
+		}
+	}
+	bool part1 = true;
+	for (std::pair<char, int>& p : folds)
+	{
+		if (p.first == 'x') // fold left
+		{
+			for (std::pair<int, int>& i : input)
+			{
+				if (i.first > p.second)
+				{
+					i.first -= (i.first - p.second) * 2;
+				}
+			}
+		}
+		else if (p.first == 'y') // fold up
+		{
+			for (std::pair<int, int>& i : input)
+			{
+				if (i.second > p.second)
+				{
+					i.second -= (i.second - p.second) * 2;
+				}
+			}
+		}
+		if (part1)
+		{
+			part1 = false;
+			std::set<std::pair<int, int> > current = std::set<std::pair<int, int> >(input.begin(), input.end());
+			std::cout << "Puzzle Twentyfive: " << current.size() << "\n";
+		}
+	}
+
+	std::set<std::pair<int, int> > current = std::set<std::pair<int, int> >(input.begin(), input.end());
+
+	int maxx, maxy; maxx = maxy = 0;
+	for (std::pair<int, int> i : current)
+	{
+		if (i.first > maxx) maxx = i.first;
+		if (i.second > maxy) maxy = i.second;
+	}
+
+	std::vector<std::string> lines;
+	for (int i = 0; i <= maxy; ++i)
+	{
+		std::string s;
+		s.append(maxx + 1, '.');
+		lines.push_back(s);
+	}
+	for (std::pair<int, int> i : current)
+	{
+		lines.at(i.second).at(i.first) = '#';
+	}
+
+	std::cout << "Puzzle Twentysix: \n";
+	for (std::string& s : lines)
+	{
+		std::cout << s << "\n";
+	}
+}
+
+void DayFourteen()
+{
+	struct Rule
+	{
+		char a;
+		char b;
+		char r; // 'r'esult (what we insert)
+		std::vector<int> p;
+		uint64_t firedThisStep = 0;
+		uint64_t firedNextStep = 0;
+		Rule* depA;
+		Rule* depB;
+	};
+
+	std::ifstream exprFile("DayFourteen.txt");
+	std::string singleExpr;
+
+	std::string first;
+	std::vector<Rule> rules;
+
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		if (first.empty())
+		{
+			first = singleExpr;
+		}
+		else if (!singleExpr.empty())
+		{
+			rules.push_back(Rule());
+			rules.back().a = singleExpr.at(0);
+			rules.back().b = singleExpr.at(1);
+			rules.back().r = singleExpr.back();
+		}
+	}
+
+	for (Rule& r : rules)
+	{
+		for (Rule& r2 : rules)
+		{
+			if(r.a == r2.a && r.r == r2.b) 
+			{	r.depA = &r2; continue; }
+			if(r.r == r2.a && r.b == r2.b) 
+			{	r.depB = &r2; continue; }
+		}
+	}
+
+	std::map<char, uint64_t> common;
+	for (char c : first)
+	{
+		common.insert(std::pair<char, int>(c, 0));
+	}
+
+	// seed
+	char ch;
+	for(int i = 0; i < first.length(); ++i) // get each char
+	{
+		char ch = first[i];
+		common[ch]++;
+
+		if(i < (first.length() - 1))
+		{
+			char second = first[i+1];
+			for (Rule& r : rules)
+			{
+				if (ch == r.a && second == r.b) // as soon as we find a valid one
+				{
+					r.firedThisStep++;
+					break;
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < 40; ++i)
+	{
+		for (Rule& r : rules)
+		{
+			if (r.firedThisStep > 0)
+			{
+				common[r.r] += r.firedThisStep;
+				if(r.depA)
+				{
+					r.depA->firedNextStep += r.firedThisStep;
+				}
+				if (r.depB)
+				{
+					r.depB->firedNextStep += r.firedThisStep;
+				}
+				r.firedThisStep = 0;
+			}
+		}
+
+		for (Rule& r : rules)
+		{
+			if(r.firedNextStep > 0) 
+			{
+				r.firedThisStep = r.firedNextStep;
+				r.firedNextStep = 0;
+			}
+		}
+
+		if (i == 9)
+		{
+			uint64_t max = 0;
+			uint64_t min = ULLONG_MAX;
+			char maxc, minc;
+			int length = 0;
+			for (std::pair<char, uint64_t> p : common)
+			{
+				if(p.second > max) { max = p.second; maxc = p.first; }
+				if(p.second < min) { min = p.second; minc = p.first; }
+				length += p.second;
+			}
+
+			std::cout << "Puzzle Twentyseven: " << max - min << "\n";	
+		}
+	}
+
+	uint64_t max = 0;
+	uint64_t min = ULLONG_MAX;
+	char maxc, minc;
+	int length = 0;
+	for (std::pair<char, uint64_t> p : common)
+	{
+		if(p.second > max) { max = p.second; maxc = p.first; }
+		if(p.second < min) { min = p.second; minc = p.first; }
+		length += p.second;
+	}
+
+	std::cout << "Puzzle Twentyeight: " << max - min << "\n";	
+}
+
 int main()
 {
 //	PuzzleTwo();
@@ -872,5 +1366,10 @@ int main()
 //	DaySix();
 //	DaySeven();
 //	DayEight();
-	DayNine();
+//	DayNine();
+//	DayTen();
+//	DayEleven();
+//	DayTwelve();
+	DayThirteen();
+	DayFourteen();
 }
