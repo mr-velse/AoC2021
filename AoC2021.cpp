@@ -18,15 +18,22 @@
 #include "LanternFish.h"
 #include "CaveNetwork.h"
 
-void PuzzleTwo()
+void DayOne()
 {
 	int window = 0;
 	int increases = 0;
 	int last = -1;
 
+	int prev = INT_MAX;
+	int puzz1ans = 0;
+
 	int index = 0;
 	for (int depth : Depths)
 	{
+		if(depth > prev)
+			puzz1ans++;
+		prev = depth;
+
 		window += depth;
 		if (index > 2)		
 		{
@@ -42,77 +49,78 @@ void PuzzleTwo()
 		index++;
 	}
 
-	std::cout << "Number of increases: " << increases << "\n";
+	std::cout << "Puzzle One: " << puzz1ans << "\n";
+	std::cout << "Puzzle Two: " << increases << "\n";
 }
 
-void PuzzleThree()
+void DayTwo()
 {
-	int x = 0;
-	int depth = 0;
-
-	std::ifstream exprFile("Movements.txt");
-	std::string singleExpr;
-	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
 	{
-		int space = singleExpr.find(" ");
-		if(space != std::string::npos)
-		{
-			std::string numberStr = singleExpr.substr(space + 1);
-			int number = std::stoi(numberStr);
+		int x = 0;
+		int depth = 0;
 
-			if (singleExpr.find("forward") != std::string::npos)
+		std::ifstream exprFile("Movements.txt");
+		std::string singleExpr;
+		while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+		{
+			int space = singleExpr.find(" ");
+			if(space != std::string::npos)
 			{
-				x += number;
-			}
-			else if (singleExpr.find("down") != std::string::npos)
-			{
-				depth += number;
-			}
-			if (singleExpr.find("up") != std::string::npos)
-			{
-				depth -= number;
+				std::string numberStr = singleExpr.substr(space + 1);
+				int number = std::stoi(numberStr);
+
+				if (singleExpr.find("forward") != std::string::npos)
+				{
+					x += number;
+				}
+				else if (singleExpr.find("down") != std::string::npos)
+				{
+					depth += number;
+				}
+				if (singleExpr.find("up") != std::string::npos)
+				{
+					depth -= number;
+				}
 			}
 		}
+
+		const int answer = depth * x;
+		std::cout << "Puzzle Three: " << answer << "\n";
 	}
-
-	const int answer = depth * x;
-	std::cout << "Depth x Horizontal Position: " << answer << "\n";
-}
-
-void PuzzleFour()
-{
-	int x = 0;
-	int depth = 0;
-	int aim = 0;
-
-	std::ifstream exprFile("Movements.txt");
-	std::string singleExpr;
-	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
 	{
-		int space = singleExpr.find(" ");
-		if (space != std::string::npos)
-		{
-			std::string numberStr = singleExpr.substr(space + 1);
-			int number = std::stoi(numberStr);
+		int x = 0;
+		int depth = 0;
+		int aim = 0;
 
-			if (singleExpr.find("forward") != std::string::npos)
+		std::ifstream exprFile("Movements.txt");
+		std::string singleExpr;
+		while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+		{
+			int space = singleExpr.find(" ");
+			if (space != std::string::npos)
 			{
-				x += number;
-				depth += (number * aim);
-			}
-			else if (singleExpr.find("down") != std::string::npos)
-			{
-				aim += number;
-			}
-			if (singleExpr.find("up") != std::string::npos)
-			{
-				aim -= number;
+				std::string numberStr = singleExpr.substr(space + 1);
+				int number = std::stoi(numberStr);
+
+				if (singleExpr.find("forward") != std::string::npos)
+				{
+					x += number;
+					depth += (number * aim);
+				}
+				else if (singleExpr.find("down") != std::string::npos)
+				{
+					aim += number;
+				}
+				if (singleExpr.find("up") != std::string::npos)
+				{
+					aim -= number;
+				}
 			}
 		}
-	}
 
-	const int answer = depth * x;
-	std::cout << "Depth x Horizontal Position: " << answer << "\n";
+		const int answer = depth * x;
+		std::cout << "Puzzle Four: " << answer << "\n";
+	}
 }
 
 void DayThree()
@@ -1276,7 +1284,6 @@ void DayFourteen()
 	}
 
 	// seed
-	char ch;
 	for(int i = 0; i < first.length(); ++i) // get each char
 	{
 		char ch = first[i];
@@ -1355,21 +1362,624 @@ void DayFourteen()
 	std::cout << "Puzzle Twentyeight: " << max - min << "\n";	
 }
 
+void DayFifteen()
+{
+	struct Node
+	{
+		int value = 0;
+		int x = 0;
+		int y = 0;
+		std::vector<Node*> neighbours;
+	};
+	std::ifstream exprFile("DayFifteen.txt");
+	std::string singleExpr;
+
+	std::vector<std::string> lines;
+	std::vector<Node> nodes;
+
+	int xmax, ymax; xmax = ymax = 0;
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		lines.push_back(singleExpr);
+		xmax = singleExpr.length();
+		++ymax;
+	}
+
+	for(int ypos = 0; ypos < ymax; ypos++)
+	{
+		for(int xpos = 0; xpos < xmax; xpos++)
+		{
+			nodes.push_back(Node());
+			char ch = lines[ypos].at(xpos);
+			nodes.back().value = std::atoi(&ch);
+			nodes.back().x = xpos;
+			nodes.back().y = ypos;
+		}
+	}
+	for(int xpos = 0; xpos < xmax; xpos++)
+	{
+		for(int ypos = 0; ypos < ymax; ypos++)
+		{
+			Node& n = nodes.at(xpos + (ypos * ymax));
+			if(xpos > 0)
+				n.neighbours.push_back(&(nodes.at((xpos -1) + (xmax * ypos))));
+			if(ypos > 0)
+				n.neighbours.push_back(&(nodes.at(xpos + (xmax * (ypos - 1)))));
+			if(xpos < (xmax - 1))
+				n.neighbours.push_back(&(nodes.at(xpos + 1 + (xmax * ypos))));
+			if(ypos < (ymax - 1))
+				n.neighbours.push_back(&(nodes.at(xpos + (xmax * (ypos + 1)))));
+		}
+	}
+	{
+		Node& start = nodes.front();
+		Node& goal = nodes.back();
+
+		std::set<Node*> openSet;
+		openSet.insert(&start);
+
+		// For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from start
+		// to n currently known.
+		std::map<Node*, Node*> cameFrom;
+
+		// For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
+		std::map<Node*, int> gScore; // := map with default value of Infinity
+		gScore[&start] = 0;
+
+		// For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+		// how short a path from start to finish can be if it goes through n.
+		std::map<Node*, int> fScore; // := map with default value of Infinity
+		fScore[&start] = (xmax + ymax - start.x - start.y) * 10;
+
+		bool success = false;
+		std::vector<Node*> path;
+		while(!openSet.empty())
+		{	// This operation can occur in O(1) time if openSet is a min-heap or a priority queue
+			Node* current = nullptr; //  := the node in openSet having the lowest fScore[] value
+			int lowest = INT_MAX;
+			for (Node* n : openSet)
+			{
+				std::map<Node*, int>::iterator it = fScore.find(n);
+				if (it != fScore.end())
+				{
+					if (it->second < lowest)
+					{
+						current = it->first;
+						lowest = it->second;
+					}
+				}
+			}
+			if(current == &goal)
+			{
+				path.push_back(current);
+
+				std::map<Node*, Node*>::iterator it = cameFrom.find(current);
+				while (it != cameFrom.end())
+				{
+					current = cameFrom[current];
+					path.push_back(current);
+					it = cameFrom.find(current);
+				}
+
+				success = true;
+				break;
+			}
+		
+			openSet.erase(current);
+
+			for(Node* neighbor : current->neighbours)
+			{
+				std::map<Node*, int>::iterator it = gScore.find(neighbor);
+				if (it == gScore.end())
+					gScore[neighbor] = 1000000000; // arbitrary
+
+				// d(current,neighbor) is the weight of the edge from current to neighbor
+				// tentative_gScore is the distance from start to the neighbor through current
+				int tentative_gScore = gScore[current] + neighbor->value;
+				if(tentative_gScore < gScore[neighbor])
+				{	// This path to neighbor is better than any previous one. Record it!
+					cameFrom[neighbor] = current;
+					gScore[neighbor] = tentative_gScore;
+					int f = tentative_gScore + ((xmax + ymax - neighbor->x - neighbor->y)); // * 10);
+				//	for(Node* n1 : neighbor->neighbours)
+				//		f += n1->value; // favour the neighbour with lower value neighbours.
+					fScore[neighbor] = f;
+					std::set<Node*>::iterator it = openSet.find(neighbor);
+					if(it == openSet.end())
+					{					
+						openSet.insert(neighbor);
+					}
+				}
+			}
+		}
+
+		if (success)
+		{
+			int total = 0;
+			for(Node* n : path)
+				total += n->value;
+
+			total -= start.value;
+
+			std::cout << "Puzzle Twentynine: " << total << "\n";
+		}
+	}
+
+	// expand to 5v5
+	std::vector<Node>* nodes5x5 = new std::vector<Node>();
+	nodes5x5->reserve(250000);
+	for (int j = 0; j < ymax; ++j)
+	{
+		for(int f = 0; f < 5; ++f)
+		{
+			for(int i = 0; i < xmax; ++i)
+			{
+				const int idx = i + (j * xmax);
+				nodes5x5->push_back(Node());
+				nodes5x5->back().value = (nodes.at(idx).value + f);
+				nodes5x5->back().x = nodes.at(idx).x + (f * xmax);
+				nodes5x5->back().y = nodes.at(idx).y;
+				if(nodes5x5->back().value > 9)
+					nodes5x5->back().value -= 9;
+			}
+		}
+	}
+	xmax *= 5;
+	for(int f = 1; f < 5; ++f)
+	{
+		for (int j = 0; j < ymax; ++j)
+		{
+			for(int i = 0; i < xmax; ++i)
+			{
+				const int idx = i + (j * xmax);
+				nodes5x5->push_back(Node());
+				nodes5x5->back().value = (nodes5x5->at(idx).value + f);
+				nodes5x5->back().x = nodes5x5->at(idx).x;
+				nodes5x5->back().y = nodes5x5->at(idx).y + (f * ymax);
+				if(nodes5x5->back().value > 9)
+					nodes5x5->back().value -= 9;
+			}
+		}
+	}
+	ymax *= 5;
+
+	for(int xpos = 0; xpos < xmax; xpos++)
+	{
+		for(int ypos = 0; ypos < ymax; ypos++)
+		{
+			Node& n = nodes5x5->at(xpos + (ypos * ymax));
+			if(xpos > 0)
+				n.neighbours.push_back(&(nodes5x5->at((xpos -1) + (xmax * ypos))));
+			if(ypos > 0)
+				n.neighbours.push_back(&(nodes5x5->at(xpos + (xmax * (ypos - 1)))));
+			if(xpos < (xmax - 1))
+				n.neighbours.push_back(&(nodes5x5->at(xpos + 1 + (xmax * ypos))));
+			if(ypos < (ymax - 1))
+				n.neighbours.push_back(&(nodes5x5->at(xpos + (xmax * (ypos + 1)))));
+		}
+	}
+
+	{
+		Node& start = nodes5x5->front();
+		Node& goal = nodes5x5->back();
+
+		std::set<Node*> openSet;
+		openSet.insert(&start);
+
+		// For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from start
+		// to n currently known.
+		std::map<Node*, Node*> cameFrom;
+
+		// For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
+		std::map<Node*, int> gScore; // := map with default value of Infinity
+		gScore[&start] = 0;
+
+		// For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+		// how short a path from start to finish can be if it goes through n.
+		std::map<Node*, int> fScore; // := map with default value of Infinity
+		fScore[&start] = (xmax + ymax - start.x - start.y) * 10;
+
+		bool success = false;
+		std::vector<Node*> path;
+		while(!openSet.empty())
+		{	// This operation can occur in O(1) time if openSet is a min-heap or a priority queue
+			Node* current = nullptr; //  := the node in openSet having the lowest fScore[] value
+			int lowest = INT_MAX;
+			for (Node* n : openSet)
+			{
+				std::map<Node*, int>::iterator it = fScore.find(n);
+				if (it != fScore.end())
+				{
+					if (it->second < lowest)
+					{
+						current = it->first;
+						lowest = it->second;
+					}
+				}
+			}
+			if(current == &goal)
+			{
+				path.push_back(current);
+
+				std::map<Node*, Node*>::iterator it = cameFrom.find(current);
+				while (it != cameFrom.end())
+				{
+					current = cameFrom[current];
+					path.push_back(current);
+					it = cameFrom.find(current);
+				}
+
+				success = true;
+				break;
+			}
+
+			openSet.erase(current);
+
+			for(Node* neighbor : current->neighbours)
+			{
+				std::map<Node*, int>::iterator it = gScore.find(neighbor);
+				if (it == gScore.end())
+					gScore[neighbor] = 1000000000; // arbitrary
+
+												   // d(current,neighbor) is the weight of the edge from current to neighbor
+												   // tentative_gScore is the distance from start to the neighbor through current
+				int tentative_gScore = gScore[current] + neighbor->value;
+				if(tentative_gScore < gScore[neighbor])
+				{	// This path to neighbor is better than any previous one. Record it!
+					cameFrom[neighbor] = current;
+					gScore[neighbor] = tentative_gScore;
+					int f = tentative_gScore + ((xmax + ymax - neighbor->x - neighbor->y)); // * 10);
+																							//	for(Node* n1 : neighbor->neighbours)
+																							//		f += n1->value; // favour the neighbour with lower value neighbours.
+					fScore[neighbor] = f;
+					std::set<Node*>::iterator it = openSet.find(neighbor);
+					if(it == openSet.end())
+					{					
+						openSet.insert(neighbor);
+					}
+				}
+			}
+		}
+
+		if (success)
+		{
+			int total = 0;
+			for(Node* n : path)
+				total += n->value;
+
+			total -= start.value;
+
+			std::cout << "Puzzle Thirty: " << total << "\n";
+		}
+	}
+
+}
+
+struct Packet
+{
+	uint8_t version = 0;
+	uint8_t id = 0;
+	uint64_t value = 0;
+	bool lengthid = 0;
+	uint32_t length = 0; 
+	std::vector<Packet> subs;
+
+	int sum()
+	{
+		int total = version;
+		for (Packet& p : subs)
+		{
+			total += p.sum();
+		}
+		return total;
+	}
+
+	uint64_t calc()
+	{
+		for (Packet& p : subs)
+		{
+			p.calc();
+		}
+
+		switch (id)
+		{
+			case 0: // sum
+			{
+				for (Packet& p : subs)
+				{
+					value += p.value;
+				}
+			} break;
+			case 1: // mul
+			{
+				value = 1;
+				for (Packet& p : subs)
+				{
+					value *= p.value;
+				}
+			} break;
+			case 2: // min
+			{
+				value = UINT64_MAX;
+				for (Packet& p : subs)
+				{
+					if(p.value < value)
+						value = p.value;
+				}
+			} break;
+			case 3: // max
+			{
+				for (Packet& p : subs)
+				{
+					if(p.value > value)
+						value = p.value;
+				}
+			} break;
+			case 5: // >
+			{
+				value = subs[0].value > subs[1].value ? 1 : 0;
+			} break;
+			case 6: // <
+			{
+				value = subs[0].value < subs[1].value ? 1 : 0;
+			} break;
+			case 7: // ==
+			{
+				value = subs[0].value == subs[1].value ? 1 : 0;
+			} break;
+		}
+		return value;
+	}
+
+};
+
+void BuildPacket(Packet& p, int& seek, std::vector<bool>& input, bool skipPadding)
+{
+	// parse header
+	p.version += input.at(seek++) ? 1 : 0;	p.version = p.version << 1;
+	p.version += input.at(seek++) ? 1 : 0;	p.version = p.version << 1;
+	p.version += input.at(seek++) ? 1 : 0;
+
+	p.id += input.at(seek++) ? 1 : 0;	p.id = p.id << 1;
+	p.id += input.at(seek++) ? 1 : 0;	p.id = p.id << 1;
+	p.id += input.at(seek++) ? 1 : 0;
+
+	if (p.id == 4) // literal
+	{
+		// build the value
+		bool carryOn = true;
+		while(carryOn)
+		{	
+			carryOn = input.at(seek++);
+			// read four bits into the value
+			p.value = p.value << 1;
+			p.value += input.at(seek++) ? 1 : 0;	p.value = p.value << 1;
+			p.value += input.at(seek++) ? 1 : 0;	p.value = p.value << 1;
+			p.value += input.at(seek++) ? 1 : 0;	p.value = p.value << 1;
+			p.value += input.at(seek++) ? 1 : 0;
+		}
+		while(carryOn);
+	}
+	else // operator
+	{
+		p.lengthid = input.at(seek++); // 0 = read 15bits, 1 = read 11 bits
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+		p.length += input.at(seek++) ? 1 : 0;
+		if (!p.lengthid)
+		{
+			p.length = p.length << 1;
+			p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+			p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+			p.length += input.at(seek++) ? 1 : 0;	p.length = p.length << 1;
+			p.length += input.at(seek++) ? 1 : 0;
+		}
+
+		if (p.lengthid) // 11 bits = number of subpackets
+		{
+			for (int i = 0; i < p.length; ++i)
+			{
+				p.subs.push_back(Packet());
+				BuildPacket(p.subs.back(), seek, input, false);
+			}
+		}
+		else // p.length is the number of bits to read
+		{
+			int runningLength = p.length;
+			do
+			{
+				int oldSeek = seek;
+				p.subs.push_back(Packet());
+				BuildPacket(p.subs.back(), seek, input, false);
+				runningLength -= (seek - oldSeek);
+			}
+			while (runningLength >= 11); // note - peek, do not increment
+		}
+	}
+	if(skipPadding)
+	{
+		int rem = seek % 4;
+		seek += (4 - rem); // padding
+	}
+}
+
+void DaySixteen()
+{
+	std::map<char, uint8_t> hexmap;
+	hexmap.insert(std::pair<char, uint8_t>('0', 0));
+	hexmap.insert(std::pair<char, uint8_t>('1', 1));
+	hexmap.insert(std::pair<char, uint8_t>('2', 2));
+	hexmap.insert(std::pair<char, uint8_t>('3', 3));
+	hexmap.insert(std::pair<char, uint8_t>('4', 4));
+	hexmap.insert(std::pair<char, uint8_t>('5', 5));
+	hexmap.insert(std::pair<char, uint8_t>('6', 6));
+	hexmap.insert(std::pair<char, uint8_t>('7', 7));
+	hexmap.insert(std::pair<char, uint8_t>('8', 8));
+	hexmap.insert(std::pair<char, uint8_t>('9', 9));
+	hexmap.insert(std::pair<char, uint8_t>('A', 10));
+	hexmap.insert(std::pair<char, uint8_t>('B', 11));
+	hexmap.insert(std::pair<char, uint8_t>('C', 12));
+	hexmap.insert(std::pair<char, uint8_t>('D', 13));
+	hexmap.insert(std::pair<char, uint8_t>('E', 14));
+	hexmap.insert(std::pair<char, uint8_t>('F', 15));
+
+	std::ifstream exprFile("DaySixteen.txt");
+	std::string singleExpr;
+
+	std::vector<bool> input;
+
+	int xmax, ymax; xmax = ymax = 0;
+	while (std::getline(exprFile, singleExpr)) // Gets a full line from the file
+	{
+		for(int i = 0; i < singleExpr.length(); ++i)
+		{
+			uint8_t x = hexmap[singleExpr.at(i)];
+			input.push_back(x & 8);
+			input.push_back(x & 4);
+			input.push_back(x & 2);
+			input.push_back(x & 1);
+		}
+	}
+
+	std::vector<Packet> packets;
+
+	int seek = 0;
+	while (seek < (input.size() - 11))
+	{
+		packets.push_back(Packet());
+		BuildPacket(packets.back(), seek, input, true);
+	}
+
+	int total = packets.front().sum();
+	std::cout << "Puzzle Thirty-one: " << total << "\n";
+
+	uint64_t calc = packets.front().calc();
+	std::cout << "Puzzle Thirty-two: " << calc << "\n";
+}
+
+void DaySeventeen()
+{
+	std::string input("target area : x = 195..238, y = -93.. - 67");
+
+	int ymax = -67;
+	int ymin = -93;
+
+	int xmin = 195;
+	int xmax = 238;
+
+	// x and y are independent so what are the most number of x steps that still reach the area?
+	int mostxsteps = 0;
+	bool vertical = false;
+
+	std::set<int> validXvel;
+
+	for (int i = 0; i <= xmax; ++i)
+	{
+		int xpos = 0;
+		int xvel = i;
+		int steps = 0;
+		while (xvel > 0)
+		{
+			xpos += xvel;
+			xvel--;
+			if(xvel < 0) xvel = 0;
+			steps++;
+
+			if (xpos >= xmin && xpos <= xmax)
+			{
+				validXvel.insert(i);
+				if (mostxsteps < steps)
+				{
+					mostxsteps = steps;
+					if(xvel == 0 && !vertical)
+						vertical = true;
+					continue;
+				}
+			}
+		}
+	}
+
+	std::vector<int> validYvel;
+
+	int highestvalid = 0;
+	// highest
+	for (int i = -1000; i < 1000; ++i)
+	{
+		int ypos = 0;
+		int yvel = i;
+		int steps = 0;
+		int highest = 0;
+		while (ypos >= ymin && (vertical || steps <= mostxsteps))
+		{
+			ypos += yvel;
+			yvel--;
+			steps++;
+			if(ypos > highest) highest = ypos;
+
+			if (ypos >= ymin && ypos <= ymax)
+			{
+				highestvalid = highest;
+				validYvel.push_back(i);
+			}
+		}
+	}
+
+	std::set<std::pair<int,int> > valids;
+	for (int x : validXvel)
+	{
+		for (int y : validYvel)
+		{
+			int xpos = 0;
+			int ypos = 0;
+			int xvel = x;
+			int yvel = y;
+			while (ypos >= ymin && xpos <= xmax)
+			{
+				ypos += yvel;
+				yvel--;
+				xpos += xvel;
+				xvel--;
+				if(xvel < 0) xvel = 0;
+
+				if (ypos >= ymin && ypos <= ymax && xpos >= xmin && xpos <= xmax)
+				{
+					valids.insert(std::pair<int,int>(x,y));
+					break;
+				}
+			}
+		}
+	}
+
+	std::cout << "Puzzle Thirty-three: " << highestvalid << "\n";
+
+	std::cout << "Puzzle Thirty-four: " << valids.size() << "\n";
+}
+
 int main()
 {
-//	PuzzleTwo();
-//	PuzzleThree();
-//	PuzzleFour();
-//	DayThree();
-//	DayFour();
-//	DayFive();
+	DayOne();
+	DayTwo();
+	DayThree();
+	DayFour();
+	DayFive();
 //	DaySix();
-//	DaySeven();
-//	DayEight();
-//	DayNine();
-//	DayTen();
-//	DayEleven();
-//	DayTwelve();
+	DaySeven();
+	DayEight();
+	DayNine();
+	DayTen();
+	DayEleven();
+	DayTwelve();
 	DayThirteen();
 	DayFourteen();
+//	DayFifteen();
+	DaySixteen();
+	DaySeventeen();
 }
